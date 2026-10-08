@@ -18,4 +18,13 @@ model's single-column unique indexes answer as field errors.
 
 Field types come from `semitexa/platform-ui` (`Field::text('title')`, …).
 
-Docs: `rendering/crud-screens`, `rendering/settings-pages`, `rendering/dashboards` and `rendering/collection-feeds` in semitexa/docs.
+## Install
+
+Not included by the installer, and not tagged yet. Until its first release, add it to an existing project from the project root:
+
+```bash
+docker compose run --rm --no-deps --user "$(id -u):$(id -g)" app composer require semitexa/crud
+bin/semitexa server:restart
+```
+
+Docs (in semitexa/docs): [CRUD screens](https://github.com/semitexa/semitexa-docs/blob/master/docs/en/rendering/crud-screens.md), [settings pages](https://github.com/semitexa/semitexa-docs/blob/master/docs/en/rendering/settings-pages.md), [dashboards](https://github.com/semitexa/semitexa-docs/blob/master/docs/en/rendering/dashboards.md) and [collection feeds](https://github.com/semitexa/semitexa-docs/blob/master/docs/en/rendering/collection-feeds.md).
