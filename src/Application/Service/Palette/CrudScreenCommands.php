@@ -43,6 +43,12 @@ final class CrudScreenCommands implements UiCommandSourceInterface
             if (array_filter($names, static fn (string $name): bool => $name !== '' && str_contains($name, $needle)) === []) {
                 continue;
             }
+            // Checked here, not left to the palette: a screen without a
+            // permission is for signed-in visitors (as its route is), while the
+            // palette shows an item without one to everybody, guests included.
+            if (!UiPermissions::permits($crud->permissionFor('read'))) {
+                continue;
+            }
             yield new UiPaletteItem(
                 title: $crud->plural(),
                 href: (string) $crud->path,
@@ -51,21 +57,25 @@ final class CrudScreenCommands implements UiCommandSourceInterface
                 icon: $crud->icon,
                 permission: $crud->permissionFor('read'),
             );
-            yield new UiPaletteItem(
-                title: 'New ' . mb_strtolower($crud->label),
-                href: $crud->path . '?create',
-                group: 'Screens',
-                subtitle: $crud->plural(),
-                icon: 'plus',
-                permission: $crud->permissionFor('create'),
-            );
-            if (($found += 2) >= $limit) {
+            $found++;
+            if (UiPermissions::permits($crud->permissionFor('create'))) {
+                yield new UiPaletteItem(
+                    title: 'New ' . mb_strtolower($crud->label),
+                    href: $crud->path . '?create',
+                    group: 'Screens',
+                    subtitle: $crud->plural(),
+                    icon: 'plus',
+                    permission: $crud->permissionFor('create'),
+                );
+                $found++;
+            }
+            if ($found >= $limit) {
                 return;
             }
         }
         foreach (SettingsPages::all() as $page) {
             $names = mb_strtolower($page->title . ' settings ' . (string) $page->description);
-            if ($found >= $limit || !str_contains($names, $needle)) {
+            if ($found >= $limit || !str_contains($names, $needle) || !UiPermissions::permits($page->permission)) {
                 continue;
             }
             yield new UiPaletteItem(

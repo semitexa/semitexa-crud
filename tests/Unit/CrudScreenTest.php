@@ -202,10 +202,28 @@ final class CrudScreenTest extends TestCase
         self::assertSame('Workshop', $nav[1]['label']);
         self::assertNull($nav[1]['items'][0]['permission'], 'parts need only a sign-in');
 
+        $this->grant(['gadgets.read', 'gadgets.create']);
         $commands = iterator_to_array($this->action(CrudScreenCommands::class)->search('gadg', 10), false);
         self::assertSame(['Gadgets', 'New gadget'], array_map(static fn ($c) => $c->title, $commands));
         self::assertSame(['gadgets.read', 'gadgets.create'], array_map(static fn ($c) => $c->permission, $commands));
         self::assertSame('/crud/gadgets?create', $commands[1]->href);
+    }
+
+    #[Test]
+    public function a_guest_is_not_offered_screens_that_need_a_sign_in(): void
+    {
+        // The palette shows an item without a permission to everybody; a
+        // screen without one is for signed-in visitors, so the source decides.
+        UiPermissions::reset();
+        $commands = iterator_to_array($this->action(CrudScreenCommands::class)->search('part', 10), false);
+        self::assertSame([], $commands, 'a guest sees no screen names or paths');
+
+        $this->grant([]);
+        $commands = iterator_to_array($this->action(CrudScreenCommands::class)->search('part', 10), false);
+        self::assertContains('Parts', array_map(static fn ($c) => $c->title, $commands), 'signed in is enough for parts');
+
+        $commands = iterator_to_array($this->action(CrudScreenCommands::class)->search('gadg', 10), false);
+        self::assertSame([], $commands, 'gadgets need gadgets.read');
     }
 
     #[Test]
@@ -226,13 +244,13 @@ final class CrudScreenTest extends TestCase
 
         $this->grant(['gadgets.read']);
         $commands = iterator_to_array($this->action(CrudScreenCommands::class)->search('Gad', 10), false);
-        self::assertSame(['Gadgets', 'New gadget', 'Gadget'], array_map(static fn ($c) => $c->title, $commands), 'screens first, then records');
-        self::assertSame('/crud/gadgets?view=gad-1', $commands[2]->href, 'a reader goes to the view dialog');
+        self::assertSame(['Gadgets', 'Gadget'], array_map(static fn ($c) => $c->title, $commands), 'screens first, then records; no "New gadget" without gadgets.create');
+        self::assertSame('/crud/gadgets?view=gad-1', $commands[1]->href, 'a reader goes to the view dialog');
 
         $this->grant([]);
         $this->db->executed = [];
         $commands = iterator_to_array($this->action(CrudScreenCommands::class)->search('Gad', 10), false);
-        self::assertSame(['Gadgets', 'New gadget'], array_map(static fn ($c) => $c->title, $commands), 'the screens, which the palette then hides; no record');
+        self::assertSame([], $commands, 'no screen and no record the visitor may not read');
         self::assertNull($this->db->first('SELECT'), 'a screen the visitor may not read is not even queried');
     }
 
