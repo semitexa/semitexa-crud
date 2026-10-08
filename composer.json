@@ -36,6 +36,13 @@
         "semitexa-module": {
             "name": "crud",
             "description": "CRUD screens and collection feeds from one declaration"
+        },
+        "semitexa": {
+            "floors": {
+                "semitexa/core": "next",
+                "semitexa/api": "next",
+                "semitexa/platform-ui": "next"
+            }
         }
     },
     "keywords": [
