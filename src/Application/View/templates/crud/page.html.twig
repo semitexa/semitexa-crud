@@ -1,0 +1,154 @@
+{#
+ # A CRUD screen's page (#[AsCrud] → CrudPageHandler). It extends the screen's
+ # own layout (`layout:` on the attribute), which must define `main`.
+ #
+ # The grid's endpoint is this same path: its JSON profile is the collection,
+ # its OPTIONS the contract, its name the live feed the grid subscribes to.
+ # The dialogs are part of the address — `?create`, `?edit=<id>`, `?view=<id>`
+ # — so each can be linked to, reloaded, and closed with back.
+ #
+ # Reads `screen`: id, path, label, plural, idField, formFields (UiField list),
+ # permissions {create, edit, delete} (names for can(); null = signed in),
+ # actions [{permission, props}] (UiGridAction props), editing {id, title, values, version} | null,
+ # viewing {id, title, param, rows: [{field, label, value, mono}]} | null,
+ # missing (an id ?edit named that the screen does not hold) | null.
+ #}
+{% extends screen.layout %}
+
+{% block title %}{{ screen.plural }}{% endblock %}
+
+{% block main %}
+<div data-crud="{{ screen.id }}" sx-layout="stack" sx-gap="4">
+    <header sx-layout="cluster" sx-gap="3" sx-justify="between" sx-align="center">
+        <h1 ui-text="title" style="font-size:1.75rem;margin:0;">{{ screen.plural }}</h1>
+        {% if can(screen.permissions.create) %}
+            <a ui="button" ui-tone="brand" ui-variant="solid" href="{{ screen.path }}?create"
+               ui-behavior-open="#crud-create" data-crud-create
+               data-ui-command="New {{ screen.label|lower }}" data-ui-command-keywords="create add">New {{ screen.label|lower }}</a>
+        {% endif %}
+    </header>
+
+    {% if screen.missing %}
+        <p role="alert" data-crud-missing
+           style="margin:0;padding:var(--ui-space-3) var(--ui-space-4);border-left:4px solid var(--ui-state-warning);background:var(--ui-surface-sunken);border-radius:var(--ui-radius-md);">
+            There is no {{ screen.label|lower }} with id <code>{{ screen.missing }}</code> — it may have been deleted.
+        </p>
+    {% endif %}
+
+    {#- Only the actions the visitor may run are drawn — and signed into the grid. -#}
+    {%- set _grid_actions = [] -%}
+    {%- for action in screen.actions -%}
+        {%- if can(action.permission) %}{% set _grid_actions = _grid_actions|merge([action.props]) %}{% endif -%}
+    {%- endfor %}
+    {{ component('platform.grid', {
+        gridId: 'crud',
+        endpoint: screen.path,
+        urlState: 'list',
+        serverActions: _grid_actions,
+        actionHandler: 'crud.run',
+        crud: screen.id,
+        rowActions: not screen.idField ? [] : (can(screen.permissions.edit)
+            ? [{label: 'Edit', href: screen.path ~ '?edit={' ~ screen.idField ~ '}'}]
+            : [{label: 'View', href: screen.path ~ '?view={' ~ screen.idField ~ '}'}]),
+        emptyMessage: can(screen.permissions.create)
+            ? 'No ' ~ screen.plural|lower ~ ' yet. Create the first one.'
+            : 'No ' ~ screen.plural|lower ~ ' yet.',
+    }) }}
+
+    {% if can(screen.permissions.create) %}
+        <dialog id="crud-create" ui-behavior="modal" ui-modal="urlParam: create" ui-size="lg"
+                aria-labelledby="crud-create-title" data-crud-dialog="create">
+            <div ui-modal="header">
+                <h2 id="crud-create-title" ui-modal="title" style="flex:1;">New {{ screen.label|lower }}</h2>
+                <button type="button" ui="button" ui-variant="ghost" ui-behavior-dismiss aria-label="Close">✕</button>
+            </div>
+            <div ui-modal="body">
+                {% set _crud_create_fields %}
+                    {% for field in screen.formFields %}
+                        {{ component('platform.field', ui_field_props(field)) }}
+                    {% endfor %}
+                {% endset %}
+                {{ component('platform.form', {
+                    showStatus: true,
+                    showSubmit: true,
+                    statusInitialMessage: '',
+                    autoFields: true,
+                    submitAction: 'crud.save',
+                    submitText: 'Create ' ~ screen.label|lower,
+                    ariaLabel: 'New ' ~ screen.label|lower,
+                    crud: screen.id,
+                }, {content: _crud_create_fields}) }}
+            </div>
+        </dialog>
+    {% endif %}
+
+    {% if screen.editing %}
+        {% set _editing = screen.editing %}
+        <dialog id="crud-edit" ui-behavior="modal" ui-modal="urlParam: edit" ui-size="lg"
+                aria-labelledby="crud-edit-title" data-crud-dialog="edit">
+            <div ui-modal="header">
+                <h2 id="crud-edit-title" ui-modal="title" style="flex:1;">Edit {{ screen.label|lower }} “{{ _editing.title }}”</h2>
+                <button type="button" ui="button" ui-variant="ghost" ui-behavior-dismiss aria-label="Close">✕</button>
+            </div>
+            <div ui-modal="body" sx-layout="stack" sx-gap="4">
+                {% set _crud_edit_fields %}
+                    {% for field in screen.formFields %}
+                        {{ component('platform.field', ui_field_props(field, _editing.values[field.name] ?? null)) }}
+                    {% endfor %}
+                {% endset %}
+                {{ component('platform.form', {
+                    showStatus: true,
+                    showSubmit: true,
+                    statusInitialMessage: '',
+                    autoFields: true,
+                    submitAction: 'crud.save',
+                    submitText: 'Save ' ~ screen.label|lower,
+                    ariaLabel: 'Edit ' ~ screen.label|lower,
+                    crud: screen.id,
+                    record: _editing.id,
+                    version: _editing.version,
+                }, {content: _crud_edit_fields}) }}
+
+                {% if can(screen.permissions.delete) %}
+                    {# Two deliberate steps: open the disclosure, then press the button. #}
+                    <details data-crud-delete style="border-top:1px solid var(--ui-border-subtle);padding-top:var(--ui-space-3);">
+                        <summary ui-text="label" style="cursor:pointer;">Delete this {{ screen.label|lower }}…</summary>
+                        <div sx-layout="stack" sx-gap="2" style="margin-top:var(--ui-space-3);">
+                            <p ui-text="muted" style="margin:0;">“{{ _editing.title }}” is removed for everyone. This cannot be undone.</p>
+                            {{ component('platform.form', {
+                                showStatus: true,
+                                showSubmit: true,
+                                statusInitialMessage: '',
+                                submitAction: 'crud.delete',
+                                submitText: 'Delete ' ~ screen.label|lower,
+                                submitTone: 'danger',
+                                ariaLabel: 'Delete ' ~ screen.label|lower,
+                                crud: screen.id,
+                                record: _editing.id,
+                            }) }}
+                        </div>
+                    </details>
+                {% endif %}
+            </div>
+        </dialog>
+    {% endif %}
+    {% if screen.viewing %}
+        {% set _viewing = screen.viewing %}
+        <dialog id="crud-view" ui-behavior="modal" ui-modal="urlParam: {{ _viewing.param }}" ui-size="lg"
+                aria-labelledby="crud-view-title" data-crud-dialog="view">
+            <div ui-modal="header">
+                <h2 id="crud-view-title" ui-modal="title" style="flex:1;">{{ screen.label }} “{{ _viewing.title }}”</h2>
+                <button type="button" ui="button" ui-variant="ghost" ui-behavior-dismiss aria-label="Close">✕</button>
+            </div>
+            <div ui-modal="body">
+                <dl data-crud-view style="display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:var(--ui-space-2) var(--ui-space-4);margin:0;">
+                    {% for row in _viewing.rows %}
+                        <dt ui-text="muted" data-crud-view-field="{{ row.field }}">{{ row.label }}</dt>
+                        <dd style="margin:0;white-space:pre-wrap;overflow-wrap:anywhere;">{% if row.mono %}<code>{{ row.value }}</code>{% else %}{{ row.value }}{% endif %}</dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </dialog>
+    {% endif %}
+</div>
+{% endblock %}

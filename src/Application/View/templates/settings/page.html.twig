@@ -1,0 +1,45 @@
+{#
+ # A settings page (#[AsSettingsPage] → SettingsPageHandler), on the platform
+ # settings layout: the sections of its group the visitor may open, and its one
+ # form, saved through settings.save with the page signed into it.
+ #
+ # Reads `page`: id, title, description, layout, fields (UiField list), values,
+ # sections [{key, label, href, icon, permission}].
+ #}
+{% extends page.layout %}
+
+{% block title %}{{ page.title }} settings{% endblock %}
+
+{% block main %}
+    {%- set _sections = [] -%}
+    {%- for section in page.sections -%}
+        {%- if can(section.permission) %}{% set _sections = _sections|merge([section]) %}{% endif -%}
+    {%- endfor -%}
+    {% embed '@platform-ui/pages/settings.html.twig' with {
+        title: 'Settings',
+        current: page.id,
+        sections: _sections,
+        page: page,
+    } %}
+        {% block section %}
+            <section data-settings-page="{{ page.id }}" sx-layout="stack" sx-gap="3" style="max-width:40rem;">
+                {% set _fields %}
+                    {% for field in page.fields %}
+                        {{ component('platform.field', ui_field_props(field, page.values[field.name] ?? null)) }}
+                    {% endfor %}
+                {% endset %}
+                {{ component('platform.form', {
+                    title: page.title,
+                    description: page.description,
+                    showStatus: true,
+                    showSubmit: true,
+                    statusInitialMessage: '',
+                    autoFields: true,
+                    submitAction: 'settings.save',
+                    submitText: 'Save ' ~ page.title|lower ~ ' settings',
+                    settings: page.id,
+                }, {content: _fields}) }}
+            </section>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
