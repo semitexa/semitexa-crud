@@ -23,7 +23,7 @@ Field types come from `semitexa/platform-ui` (`Field::text('title')`, …).
 Not included by the installer, and not tagged yet. Until its first release, add it to an existing project from the project root:
 
 ```bash
-docker compose run --rm --no-deps --user "$(id -u):$(id -g)" app composer require semitexa/crud:dev-master
+docker compose run --rm --no-deps --user "$(id -u):$(id -g)" app composer require semitexa/crud
 bin/semitexa server:restart
 ```
 
