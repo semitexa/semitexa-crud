@@ -1,6 +1,6 @@
 {
     "name": "semitexa/crud",
-    "description": "Semitexa CRUD: admin screens declared in one class — a list with its live feed, forms and actions (#[AsCrud]), settings pages (#[AsSettingsPage]), dashboard widgets for screens, field-driven collection feeds (#[AsCollectionFeed]).",
+    "description": "Semitexa CRUD: admin screens declared in one class \u2014 a list with its live feed, forms and actions (#[AsCrud]), settings pages (#[AsSettingsPage]), dashboard widgets for screens, field-driven collection feeds (#[AsCollectionFeed]).",
     "type": "semitexa-module",
     "license": "MIT",
     "authors": [
@@ -11,12 +11,12 @@
     ],
     "require": {
         "php": "^8.4",
-        "semitexa/api": "*",
+        "semitexa/api": ">=2026.10.08.0620 || dev-master",
         "semitexa/authorization": "*",
-        "semitexa/core": "*",
+        "semitexa/core": ">=2026.10.08.0620 || dev-master",
         "semitexa/orm": "*",
         "semitexa/platform-settings": "*",
-        "semitexa/platform-ui": "*",
+        "semitexa/platform-ui": ">=2026.10.08.0620 || dev-master",
         "semitexa/ssr": "*"
     },
     "require-dev": {
@@ -39,9 +39,9 @@
         },
         "semitexa": {
             "floors": {
-                "semitexa/core": "next",
-                "semitexa/api": "next",
-                "semitexa/platform-ui": "next"
+                "semitexa/core": "2026.10.08.0620",
+                "semitexa/api": "2026.10.08.0620",
+                "semitexa/platform-ui": "2026.10.08.0620"
             }
         }
     },
