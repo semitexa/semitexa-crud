@@ -20,7 +20,7 @@ Field types come from `semitexa/platform-ui` (`Field::text('title')`, …).
 
 ## Install
 
-Not included by the installer, and not tagged yet. Until its first release, add it to an existing project from the project root:
+Included in every project created by the installer (https://semitexa.com/install.sh) from the release after 2026.10.08.0620. In an older project, add it from the project root:
 
 ```bash
 docker compose run --rm --no-deps --user "$(id -u):$(id -g)" app composer require semitexa/crud
