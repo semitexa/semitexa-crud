@@ -288,6 +288,20 @@ final class CrudScreenTest extends TestCase
     }
 
     #[Test]
+    public function a_page_that_signed_the_screen_as_a_bare_prop_still_reaches_it(): void
+    {
+        // Before the grid declared `context`, the CRUD page passed `crud` as a
+        // prop of its own; such a page may still be open when this ships.
+        $this->grant(['gadgets.read', 'gadgets.delete']);
+        $this->db->rows = [self::storedGadget()];
+        $gridAction = CrudAction::delete()->toGridAction((new GadgetCrudFixture())->crud());
+
+        $result = $this->action(CrudGridAction::class)->handle(new UiGridActionContext('uci_grid_000000001', $gridAction, 'row', ['gad-1'], ['crud' => 'test.gadgets']));
+
+        self::assertTrue($result->ok, $result->message);
+    }
+
+    #[Test]
     public function a_grid_action_is_refused_without_its_permission_or_off_the_screen(): void
     {
         $this->db->rows = [self::storedGadget()];
@@ -358,7 +372,7 @@ final class CrudScreenTest extends TestCase
         $grid = $this->action(CrudGridAction::class);
         $gridAction = $action->toGridAction((new GadgetCrudFixture())->crud());
 
-        return $grid->handle(new UiGridActionContext('uci_grid_000000001', $gridAction, $scope, $ids, ['crud' => 'test.gadgets']));
+        return $grid->handle(new UiGridActionContext('uci_grid_000000001', $gridAction, $scope, $ids, ['context' => ['crud' => 'test.gadgets']]));
     }
 
     /** @param list<string> $permissions */

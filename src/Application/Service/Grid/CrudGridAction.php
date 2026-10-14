@@ -44,7 +44,10 @@ final class CrudGridAction implements UiGridActionInterface
 
     public function handle(UiGridActionContext $context): UiGridActionResult
     {
-        $screenId = $context->props['crud'] ?? null;
+        // The grid's declared `context` prop; a page rendered before it existed
+        // passed `crud` as a bare prop, which the grid signs the same way.
+        $signed = is_array($context->props['context'] ?? null) ? $context->props['context'] : $context->props;
+        $screenId = $signed['crud'] ?? null;
         $screen = is_string($screenId) ? CrudScreens::get($screenId) : null;
         $action = null;
         foreach ($screen?->actions() ?? [] as $candidate) {

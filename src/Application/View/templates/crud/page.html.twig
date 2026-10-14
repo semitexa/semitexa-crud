@@ -46,7 +46,7 @@
         urlState: 'list',
         serverActions: _grid_actions,
         actionHandler: 'crud.run',
-        crud: screen.id,
+        context: {crud: screen.id},
         rowActions: not screen.idField ? [] : (can(screen.permissions.edit)
             ? [{label: 'Edit', href: screen.path ~ '?edit={' ~ screen.idField ~ '}'}]
             : [{label: 'View', href: screen.path ~ '?view={' ~ screen.idField ~ '}'}]),
