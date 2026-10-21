@@ -55,7 +55,9 @@ final class CrudGridAction implements UiGridActionInterface
                 $action = $candidate;
             }
         }
-        if ($screen === null || $action === null) {
+        // A write the screen does not offer at all (allows()), whatever the
+        // visitor's permissions: the built-in delete, an edit action.
+        if ($screen === null || $action === null || ($action->operation() !== null && !$screen->allows($action->operation()))) {
             return UiGridActionResult::refused('This action is not available here.');
         }
         $crud = $screen->crud();
