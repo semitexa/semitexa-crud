@@ -42,7 +42,8 @@
             "floors": {
                 "semitexa/core": "2026.10.08.0620",
                 "semitexa/api": "2026.10.08.0620",
-                "semitexa/platform-ui": "2026.10.08.0620"
+                "semitexa/platform-ui": "next",
+                "semitexa/platform-user": "next"
             }
         }
     },

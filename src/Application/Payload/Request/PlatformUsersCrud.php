@@ -115,8 +115,10 @@ abstract class PlatformUsersCrud extends CrudDefinition
         }
         // An owner administers every site and belongs to none: one bound to a
         // site, or a site-less admin, is a misconfiguration every check reads
-        // differently.
-        if (($wantedRole === UserRole::Owner->value) !== ((string) $existing->tenantId === '')) {
+        // differently. Asked only of a role being changed: an owner bound to a
+        // site, from an install made before user:add refused one (SiteAccess
+        // keeps them), was refused every save, a new name included.
+        if ($wantedRole !== (string) $existing->role && ($wantedRole === UserRole::Owner->value) !== ((string) $existing->tenantId === '')) {
             return ['role' => (string) $existing->tenantId === ''
                 ? 'An account of no site is an owner; to step one down, use bin/semitexa.'
                 : 'An owner belongs to no site: make one with bin/semitexa user:add --role=owner.'];

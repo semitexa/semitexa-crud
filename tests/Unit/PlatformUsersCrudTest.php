@@ -144,6 +144,8 @@ final class PlatformUsersCrudTest extends TestCase
         $this->signIn('owner@example.test');
         self::assertArrayHasKey('role', $screen->check(['role' => 'owner', 'status' => 'active'], $this->row('ada@museum.test')), 'an owner belongs to no site');
         self::assertSame([], $screen->check(['role' => 'admin', 'status' => 'disabled'], $this->row('ada@museum.test')));
+        // An owner bound to a site from an older install: refused every save, a new name included.
+        self::assertSame([], $screen->check(['role' => 'owner', 'status' => 'active'], $this->row('boss@museum.test')), 'its role unchanged, it can be saved');
     }
 
     #[Test]
