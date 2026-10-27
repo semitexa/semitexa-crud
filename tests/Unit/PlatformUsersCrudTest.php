@@ -40,8 +40,12 @@ final class PlatformUsersCrudTest extends TestCase
     /** @var array<string, array{id: string, tenant: string, role: string}> */
     private array $users = [];
 
+    /** @var array{auth: mixed, authorizer: mixed} UiPermissions as it was before the test. */
+    private array $permissions;
+
     protected function setUp(): void
     {
+        $this->permissions = ['auth' => self::permission('auth')->getValue(), 'authorizer' => self::permission('authorizer')->getValue()];
         $this->orm = new OrmManager(config: new ConnectionConfig(driver: 'sqlite', sqliteMemory: true));
         $this->orm->getAdapter()->execute('CREATE TABLE platform_user (
             id BLOB PRIMARY KEY, email VARCHAR(255) NOT NULL, password_hash TEXT NOT NULL, display_name VARCHAR(255) NOT NULL,
@@ -66,7 +70,8 @@ final class PlatformUsersCrudTest extends TestCase
 
     protected function tearDown(): void
     {
-        UiPermissions::reset();
+        self::permission('auth')->setValue(null, $this->permissions['auth']);
+        self::permission('authorizer')->setValue(null, $this->permissions['authorizer']);
         $this->orm->shutdown();
     }
 
@@ -168,6 +173,26 @@ final class PlatformUsersCrudTest extends TestCase
         self::assertFalse($screen->allows('delete'));
         self::assertTrue($screen->allows('edit'));
         self::assertArrayHasKey('email', $screen->check(['role' => 'editor'], null));
+    }
+
+    /** The form, its save and the reset-link row action all ask allows('edit'). */
+    #[Test]
+    public function editing_is_offered_only_to_someone_who_may_change_users(): void
+    {
+        $screen = new TestUsersCrud();
+        self::assertFalse($screen->allows('edit'), 'no visitor');
+
+        $this->signIn('eve@museum.test');
+        self::assertFalse($screen->allows('edit'), 'an editor, even with users.edit');
+
+        $this->signIn('ada@museum.test');
+        self::assertTrue($screen->allows('edit'), 'an admin');
+        self::assertFalse($screen->allows('delete'));
+    }
+
+    private static function permission(string $name): \ReflectionProperty
+    {
+        return new \ReflectionProperty(UiPermissions::class, $name);
     }
 
     private function signIn(string $email): void

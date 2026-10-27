@@ -75,9 +75,15 @@ abstract class PlatformUsersCrud extends CrudDefinition
             ->where(PlatformUserResourceModel::column('role'), Operator::NotEquals, UserRole::Owner->value);
     }
 
+    /**
+     * Editing is offered only to someone who may change users: the form, its
+     * save and the reset-link row action (an 'edit' of the screen) all ask
+     * this, so an editor holding users.edit sees no form that every save
+     * refuses, and mails no reset link to an admin above them.
+     */
     public function allows(string $operation): bool
     {
-        return $operation === 'edit';
+        return $operation === 'edit' && (self::visitor()?->user->getRole()->canManageUsers() ?? false);
     }
 
     public function actions(): array
