@@ -58,7 +58,7 @@ final class CrudScreenCommands implements UiCommandSourceInterface
                 permission: $crud->permissionFor('read'),
             );
             $found++;
-            if (UiPermissions::permits($crud->permissionFor('create'))) {
+            if ((CrudScreens::get($crud->id)?->allows('create') ?? true) && UiPermissions::permits($crud->permissionFor('create'))) {
                 yield new UiPaletteItem(
                     title: 'New ' . mb_strtolower($crud->label),
                     href: $crud->path . '?create',

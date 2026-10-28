@@ -71,6 +71,12 @@ final readonly class CrudAction
         return new self($this->id, $this->label, $this->handler, $this->scopes, $permission, $this->confirm, $this->tone);
     }
 
+    /** The screen operation this action is ('edit', 'delete'…), null when it needs a whole permission. */
+    public function operation(): ?string
+    {
+        return str_contains($this->permission, '.') ? null : $this->permission;
+    }
+
     /** The permission this action needs on a screen, or null when signing in is enough. */
     public function permissionOn(AsCrud $crud): ?string
     {

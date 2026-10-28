@@ -94,6 +94,16 @@ abstract class CrudDefinition extends CollectionFeed
         return [];
     }
 
+    /**
+     * Whether the screen offers this write at all ('create', 'edit',
+     * 'delete'), whatever the visitor's permissions: a screen whose records
+     * are made or removed elsewhere says no, and the form actions refuse it.
+     */
+    public function allows(string $operation): bool
+    {
+        return true;
+    }
+
     // ---- the dialog in the address ------------------------------------------
 
     public function setEdit(string $v): void { $this->edit = trim($v) === '' ? null : trim($v); }

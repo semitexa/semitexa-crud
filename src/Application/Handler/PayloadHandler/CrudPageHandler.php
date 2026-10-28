@@ -47,7 +47,7 @@ final class CrudPageHandler implements TypedHandlerInterface
         $missing = null;
         // ?edit for a visitor who may not edit shows the record instead —
         // which dialog to render, so it is decided here, not in the template.
-        $editedId = UiPermissions::permits($crud->permissionFor('edit')) ? $payload->editedId() : null;
+        $editedId = $payload->allows('edit') && UiPermissions::permits($crud->permissionFor('edit')) ? $payload->editedId() : null;
         $viewedId = $editedId === null ? ($payload->viewedId() ?? $payload->editedId()) : null;
         $wanted = $editedId ?? $viewedId;
         $record = $wanted === null ? null : $this->records->find($payload, $wanted);
@@ -87,9 +87,15 @@ final class CrudPageHandler implements TypedHandlerInterface
                 'edit' => $crud->permissionFor('edit'),
                 'delete' => $crud->permissionFor('delete'),
             ],
+            // Writes the screen offers at all, whatever the permissions.
+            'allows' => [
+                'create' => $payload->allows('create'),
+                'edit' => $payload->allows('edit'),
+                'delete' => $payload->allows('delete'),
+            ],
             'actions' => array_map(
                 static fn ($action): array => ['permission' => $action->permissionOn($crud), 'props' => $action->toGridAction($crud)->toProps()],
-                $payload->actions(),
+                array_values(array_filter($payload->actions(), static fn ($action): bool => $action->operation() === null || $payload->allows($action->operation()))),
             ),
             'editing' => $editing,
             'viewing' => $viewing,

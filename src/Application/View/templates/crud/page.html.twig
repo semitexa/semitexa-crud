@@ -21,7 +21,7 @@
 <div data-crud="{{ screen.id }}" sx-layout="stack" sx-gap="4">
     <header sx-layout="cluster" sx-gap="3" sx-justify="between" sx-align="center">
         <h1 ui-text="title" style="font-size:1.75rem;margin:0;">{{ screen.plural }}</h1>
-        {% if can(screen.permissions.create) %}
+        {% if screen.allows.create and can(screen.permissions.create) %}
             <a ui="button" ui-tone="brand" ui-variant="solid" href="{{ screen.path }}?create"
                ui-behavior-open="#crud-create" data-crud-create
                data-ui-command="New {{ screen.label|lower }}" data-ui-command-keywords="create add">New {{ screen.label|lower }}</a>
@@ -47,15 +47,15 @@
         serverActions: _grid_actions,
         actionHandler: 'crud.run',
         context: {crud: screen.id},
-        rowActions: not screen.idField ? [] : (can(screen.permissions.edit)
+        rowActions: not screen.idField ? [] : (screen.allows.edit and can(screen.permissions.edit)
             ? [{label: 'Edit', href: screen.path ~ '?edit={' ~ screen.idField ~ '}'}]
             : [{label: 'View', href: screen.path ~ '?view={' ~ screen.idField ~ '}'}]),
-        emptyMessage: can(screen.permissions.create)
+        emptyMessage: screen.allows.create and can(screen.permissions.create)
             ? 'No ' ~ screen.plural|lower ~ ' yet. Create the first one.'
             : 'No ' ~ screen.plural|lower ~ ' yet.',
     }) }}
 
-    {% if can(screen.permissions.create) %}
+    {% if screen.allows.create and can(screen.permissions.create) %}
         <dialog id="crud-create" ui-behavior="modal" ui-modal="urlParam: create" ui-size="lg"
                 aria-labelledby="crud-create-title" data-crud-dialog="create">
             <div ui-modal="header">
@@ -109,7 +109,7 @@
                     version: _editing.version,
                 }, {content: _crud_edit_fields}) }}
 
-                {% if can(screen.permissions.delete) %}
+                {% if screen.allows.delete and can(screen.permissions.delete) %}
                     {# Two deliberate steps: open the disclosure, then press the button. #}
                     <details data-crud-delete style="border-top:1px solid var(--ui-border-subtle);padding-top:var(--ui-space-3);">
                         <summary ui-text="label" style="cursor:pointer;">Delete this {{ screen.label|lower }}…</summary>
