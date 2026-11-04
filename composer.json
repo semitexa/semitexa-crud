@@ -13,7 +13,7 @@
         "php": "^8.4",
         "semitexa/api": ">=2026.10.08.0620 || dev-master",
         "semitexa/authorization": "*",
-        "semitexa/core": ">=2026.10.08.0620 || dev-master",
+        "semitexa/core": ">=2026.11.04.1744 || dev-master",
         "semitexa/orm": "*",
         "semitexa/platform-settings": "*",
         "semitexa/platform-ui": ">=2026.10.29.1052 || dev-master",
@@ -40,7 +40,7 @@
         },
         "semitexa": {
             "floors": {
-                "semitexa/core": "next",
+                "semitexa/core": "2026.11.04.1744",
                 "semitexa/api": "2026.10.08.0620",
                 "semitexa/platform-ui": "2026.10.29.1052",
                 "semitexa/platform-user": "2026.10.29.1052"
