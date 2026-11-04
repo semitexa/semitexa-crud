@@ -281,6 +281,10 @@ final class CollectionFeedHandler extends AbstractSseCollectionFeedHandler imple
             };
             $map[$field->name] = $property;
         }
+        // The compiler breaks every tie by "id", whatever the primary key is called.
+        if ($metadata->primaryKeyProperty !== null) {
+            $map['id'] ??= $metadata->primaryKeyProperty;
+        }
 
         return $map;
     }

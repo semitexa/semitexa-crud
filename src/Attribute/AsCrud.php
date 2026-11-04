@@ -89,6 +89,7 @@ final class AsCrud extends AbstractPayloadRoute implements CollectionFeedRouteIn
         ?string $doc = null,
         /** @var array<string, string> operation → the permission it needs instead of "{permission}.{operation}" */
         public readonly array $permissions = [],
+        public readonly ?string $defaultSort = null,
     ) {
         if (preg_match('/\A[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)+\z/', $id) !== 1) {
             throw new \InvalidArgumentException(sprintf('#[AsCrud] id "%s" must be dotted lowercase words, like "admin.products".', $id));
@@ -136,6 +137,11 @@ final class AsCrud extends AbstractPayloadRoute implements CollectionFeedRouteIn
     public function source(): ?string
     {
         return null;
+    }
+
+    public function defaultSort(): ?string
+    {
+        return $this->defaultSort;
     }
 
     public function plural(): string

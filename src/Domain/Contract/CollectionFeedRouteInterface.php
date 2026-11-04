@@ -21,4 +21,7 @@ interface CollectionFeedRouteInterface
     public function source(): ?string;
 
     public function policy(): CollectionPaginationPolicy;
+
+    /** The order a request without a sort gets, as `?sort=` writes it ("-createdAt"). */
+    public function defaultSort(): ?string;
 }
