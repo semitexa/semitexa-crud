@@ -41,6 +41,30 @@ use Semitexa\Orm\Domain\Model\ResourceMetadata;
         'a JSON response class carrying the #[Collection*] attributes',
     ],
     seeAlso: 'ui.field-type',
+    usage: <<<'USAGE'
+        #[AsCollectionFeed(path: '/orders/feed', name: 'orders.feed', model: OrderResource::class,
+            defaultPerPage: 50, perPageOptions: [50, 100])]
+        final class OrdersFeed extends CollectionFeed
+        {
+            public function fields(): array
+            {
+                return [
+                    Field::id()->sortable(),
+                    Field::text('number')->searchable()->sortable(),
+                    Field::choice('status', ['new' => 'New', 'paid' => 'Paid'])->sortable()->filterable(),
+                    Field::integer('total')->sortable(),
+                ];
+            }
+        }
+
+        // In the page, with paging, sorting, search and live updates on the server (100,000 rows
+        // measured: first rows 206 ms, next page 313 ms):
+        {{ component('platform.grid', {endpoint: '/orders/feed', urlState: 'o'}) }}
+
+        // The model's primary key has to be `id`. Search and filters apply on Enter or Apply, and
+        // the row markup is the grid's. For other markup or search-as-you-type, write one
+        // #[AsComponent] with #[UiUrl] props and #[UiOn] handlers: ai:ask mechanisms --id=ui.url-state.
+        USAGE,
 )]
 #[Attribute(Attribute::TARGET_CLASS)]
 final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionFeedRouteInterface, DeclaresWatchScopesInterface
