@@ -281,9 +281,18 @@ final class CollectionFeedHandler extends AbstractSseCollectionFeedHandler imple
             };
             $map[$field->name] = $property;
         }
-        // The compiler breaks every tie by "id", whatever the primary key is called.
+        // The compiler breaks every tie by "id", whatever the primary key is called,
+        // so a field of that name on another column would leave pages with no total order.
         if ($metadata->primaryKeyProperty !== null) {
             $map['id'] ??= $metadata->primaryKeyProperty;
+            if ($map['id'] !== $metadata->primaryKeyProperty) {
+                throw new \LogicException(sprintf(
+                    'Feed field "id" reads "%s" on %s, but paging breaks ties by "id" and needs the primary key "%s". Name the field differently.',
+                    $map['id'],
+                    $metadata->className,
+                    $metadata->primaryKeyProperty,
+                ));
+            }
         }
 
         return $map;
