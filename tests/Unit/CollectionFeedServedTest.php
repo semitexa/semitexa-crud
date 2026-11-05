@@ -103,6 +103,24 @@ final class CollectionFeedServedTest extends TestCase
         self::assertSame('name', $blocks['collection']['sort']['default'] ?? null);
     }
 
+    #[Test]
+    public function a_field_named_id_on_another_column_is_refused(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Feed field "id" reads "name"');
+
+        $this->serve(new SkusIdOnNameFeed());
+    }
+
+    #[Test]
+    public function a_sortable_id_on_the_primary_key_is_served(): void
+    {
+        $feed = new SkusSortableIdFeed();
+        $feed->setSort('-id');
+
+        self::assertSame(['d', 'c'], self::codes($this->serve($feed)));
+    }
+
     /** @return array<string, mixed> */
     private function serve(CollectionFeed $feed): array
     {
@@ -161,6 +179,24 @@ class SkusFeed extends CollectionFeed
 #[AsCollectionFeed(path: '/crud-fixture/skus/by-name', name: 'crud-fixture.skus.by-name', model: SkuResource::class, defaultPerPage: 2, perPageOptions: [2], defaultSort: 'name')]
 final class SkusByNameFeed extends SkusFeed
 {
+}
+
+#[AsCollectionFeed(path: '/crud-fixture/skus/id-on-name', name: 'crud-fixture.skus.id-on-name', model: SkuResource::class, defaultPerPage: 2, perPageOptions: [2])]
+final class SkusIdOnNameFeed extends SkusFeed
+{
+    public function fields(): array
+    {
+        return [Field::text('id')->set('property', 'name')->sortable()];
+    }
+}
+
+#[AsCollectionFeed(path: '/crud-fixture/skus/sortable-id', name: 'crud-fixture.skus.sortable-id', model: SkuResource::class, defaultPerPage: 2, perPageOptions: [2])]
+final class SkusSortableIdFeed extends SkusFeed
+{
+    public function fields(): array
+    {
+        return [Field::text('id')->set('property', 'code')->sortable(), Field::text('code')];
+    }
 }
 
 #[AsCollectionFeed(path: '/crud-fixture/skus/cursor', name: 'crud-fixture.skus.cursor', model: SkuResource::class, paginationMode: CollectionPaginationPolicy::MODE_CURSOR, defaultPerPage: 2, perPageOptions: [2])]
