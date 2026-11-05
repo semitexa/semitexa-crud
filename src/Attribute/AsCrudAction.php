@@ -29,6 +29,38 @@ use Semitexa\Core\Attribute\Capability;
         'a POST route, handler and permission check per grid action',
     ],
     seeAlso: 'crud.screen',
+    usage: <<<'USAGE'
+        // On the screen. Overriding actions() replaces the default: list delete to keep it.
+        public function actions(): array
+        {
+            return [
+                CrudAction::of('activate', 'Activate', ActivateProducts::class)->onRows()->inBulk(),
+                CrudAction::delete(),
+            ];
+        }
+
+        // The work. The permission is checked and the records are found before run():
+        // an id the screen's query() does not hold never reaches it.
+        #[AsService]
+        #[AsCrudAction]
+        final class ActivateProducts implements CrudActionHandlerInterface
+        {
+            #[InjectAsReadonly]
+            protected CrudRecords $records;
+
+            public function run(CrudDefinition $screen, array $records): UiGridActionResult
+            {
+                foreach ($records as $record) {
+                    $this->records->save($screen, $record, ['status' => 'active']);
+                }
+
+                return UiGridActionResult::done(sprintf('Activated %d products.', count($records)), count($records));
+            }
+        }
+
+        // An action needs the screen's edit permission unless ->requires('delete') names another.
+        // inHeader() puts it above the grid; confirm('...') asks first. Refuse with UiGridActionResult::refused('...').
+        USAGE,
 )]
 #[Attribute(Attribute::TARGET_CLASS)]
 final class AsCrudAction
