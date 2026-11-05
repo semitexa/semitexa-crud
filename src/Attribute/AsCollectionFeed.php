@@ -43,7 +43,7 @@ use Semitexa\Orm\Domain\Model\ResourceMetadata;
     seeAlso: 'ui.field-type',
     usage: <<<'USAGE'
         #[AsCollectionFeed(path: '/orders/feed', name: 'orders.feed', model: OrderResource::class,
-            defaultPerPage: 50, perPageOptions: [50, 100])]
+            defaultPerPage: 50, perPageOptions: [50, 100], defaultSort: '-total')]
         final class OrdersFeed extends CollectionFeed
         {
             public function fields(): array
@@ -61,8 +61,9 @@ use Semitexa\Orm\Domain\Model\ResourceMetadata;
         // measured: first rows 206 ms, next page 313 ms):
         {{ component('platform.grid', {endpoint: '/orders/feed', urlState: 'o'}) }}
 
-        // The model's primary key has to be `id`. Search and filters apply on Enter or Apply, and
-        // the row markup is the grid's. For other markup or search-as-you-type, write one
+        // Order goes in defaultSort, not in query(): an orderBy there outranks the visitor's own sort.
+        // A primary key with another name is listed as Field::id('code'). Search and filters apply
+        // on Enter or Apply, and the row markup is the grid's. For other markup or search-as-you-type, write one
         // #[AsComponent] with #[UiUrl] props and #[UiOn] handlers: ai:ask mechanisms --id=ui.url-state.
         USAGE,
 )]
@@ -74,6 +75,7 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
      * @param class-string|null $source a CollectionSourceInterface service serving them instead (a repository, an API)
      * @param list<string>      $watch  the scopes a source-served feed refreshes on (a model-served one watches its model)
      * @param list<int>         $perPageOptions
+     * @param string|null       $defaultSort the order a request without a sort gets, as `?sort=` writes it; the field must be sortable
      */
     public function __construct(
         string $path,
@@ -87,6 +89,7 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
         ?string $doc = null,
         public readonly ?string $source = null,
         public readonly array $watch = [],
+        public readonly ?string $defaultSort = null,
     ) {
         if (($model === null) === ($source === null)) {
             throw new \InvalidArgumentException(sprintf('#[AsCollectionFeed] "%s" names its rows by a model or by a source: give exactly one.', $name));
@@ -116,6 +119,11 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
     public function source(): ?string
     {
         return $this->source;
+    }
+
+    public function defaultSort(): ?string
+    {
+        return $this->defaultSort;
     }
 
     public function policy(): CollectionPaginationPolicy

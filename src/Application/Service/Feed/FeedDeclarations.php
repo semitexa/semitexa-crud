@@ -48,6 +48,7 @@ final class FeedDeclarations
             sort: $fields->sortable(),
             filter: $filter,
             filterOptions: $options,
+            defaultSort: $feed->defaultSort(),
         );
     }
 

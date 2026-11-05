@@ -52,7 +52,10 @@ abstract class CollectionFeed implements SseCollectionFeedPayloadInterface
      */
     abstract public function fields(): array;
 
-    /** Narrow the base query (it already applies the request's search, filter and sort). */
+    /**
+     * Narrow the base query; search, filter and sort are applied after it. Leave order to
+     * the route's defaultSort: an orderBy here outranks the sort the visitor chose.
+     */
     public function query(ResourceModelQuery $query): ResourceModelQuery
     {
         return $query;
