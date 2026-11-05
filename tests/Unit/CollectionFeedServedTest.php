@@ -112,6 +112,15 @@ final class CollectionFeedServedTest extends TestCase
         $this->serve(new SkusIdOnNameFeed());
     }
 
+    #[Test]
+    public function a_sortable_id_on_the_primary_key_is_served(): void
+    {
+        $feed = new SkusSortableIdFeed();
+        $feed->setSort('-id');
+
+        self::assertSame(['d', 'c'], self::codes($this->serve($feed)));
+    }
+
     /** @return array<string, mixed> */
     private function serve(CollectionFeed $feed): array
     {
@@ -178,6 +187,15 @@ final class SkusIdOnNameFeed extends SkusFeed
     public function fields(): array
     {
         return [Field::text('id')->set('property', 'name')->sortable()];
+    }
+}
+
+#[AsCollectionFeed(path: '/crud-fixture/skus/sortable-id', name: 'crud-fixture.skus.sortable-id', model: SkuResource::class, defaultPerPage: 2, perPageOptions: [2])]
+final class SkusSortableIdFeed extends SkusFeed
+{
+    public function fields(): array
+    {
+        return [Field::text('id')->set('property', 'code')->sortable(), Field::text('code')];
     }
 }
 
