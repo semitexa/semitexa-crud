@@ -36,6 +36,32 @@ use Semitexa\Crud\Application\Resource\Response\SettingsPageResponse;
         'reading a setting with its default repeated at every call site',
     ],
     seeAlso: 'crud.screen',
+    usage: <<<'USAGE'
+        #[AsSettingsPage(id: 'shop.store', path: '/settings/store', title: 'Store', group: 'shop',
+            permission: 'settings.manage', nav: 'Account')]
+        final class StoreSettings extends SettingsDefinition
+        {
+            public function fields(): array
+            {
+                return [
+                    Field::text('storeName')->required()->default('My shop'),
+                    Field::integer('lowStockThreshold')->required()->set('min', 0)->default(5),
+                ];
+            }
+
+            // Rules across fields: field name => message. Empty means valid.
+            public function check(array $values): array
+            {
+                return $values['lowStockThreshold'] === 0 ? ['lowStockThreshold' => 'Zero marks nothing as low.'] : [];
+            }
+        }
+
+        // Read a value where it is needed, with SettingsValues injected: what was saved, else the
+        // field's default, so the default is never repeated at the call site.
+        $threshold = $this->settings->of(StoreSettings::class)['lowStockThreshold'];
+
+        // Stored per tenant. Pages of one group are sections of one settings area.
+        USAGE,
 )]
 #[Attribute(Attribute::TARGET_CLASS)]
 final class AsSettingsPage extends AbstractPayloadRoute implements DeclaresRequiredPermissionsInterface

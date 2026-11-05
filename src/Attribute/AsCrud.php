@@ -54,6 +54,39 @@ use Semitexa\Orm\Domain\Model\ResourceMetadata;
         'create and update form actions that copy the form into the model',
     ],
     seeAlso: 'crud.collection-feed',
+    usage: <<<'USAGE'
+        // Start from the model; this writes the class below and a test:
+        // bin/semitexa make:crud --module=Shop --model=ProductResource --permission=catalog --nav=Content --write
+
+        #[AsCrud(id: 'shop.products', path: '/products', model: ProductResource::class, label: 'Product',
+            permission: 'catalog', nav: 'Content', defaultSort: '-updatedAt')]
+        final class ProductCrud extends CrudDefinition
+        {
+            public function fields(): array
+            {
+                return [
+                    Field::id(),
+                    Field::text('name')->required()->searchable()->sortable(),
+                    Field::choice('status', ['draft' => 'Draft', 'active' => 'Active'])->required()->default('draft')->filterable(),
+                    Field::decimal('price')->required()->set('min', 0)->sortable(),
+                    Field::datetime('updatedAt')->readOnly()->sortable(),
+                ];
+            }
+
+            // Rules across fields: field name => message. $existing is null on create.
+            public function check(array $values, ?object $existing): array
+            {
+                return ($values['price'] ?? 0) > 1000 && $existing === null ? ['price' => 'Too high for a new product.'] : [];
+            }
+        }
+
+        // permission: 'catalog' means catalog.read, .create, .edit and .delete, granted to a role;
+        // with no permission any signed-in visitor may do all four. The screen's feed, forms,
+        // live updates and delete come with the class.
+        //
+        // nav: needs crud_nav() in the layout, or the screen is reachable but listed nowhere:
+        {% set appNav = crud_nav([]) %}
+        USAGE,
 )]
 #[Attribute(Attribute::TARGET_CLASS)]
 final class AsCrud extends AbstractPayloadRoute implements CollectionFeedRouteInterface, DeclaresWatchScopesInterface, DeclaresRequiredPermissionsInterface

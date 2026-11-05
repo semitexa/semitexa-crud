@@ -21,6 +21,15 @@ use Semitexa\Core\Attribute\Capability;
         'a feed payload, handler, JSON response and Resource DTO per grid',
     ],
     seeAlso: 'crud.screen',
+    usage: <<<'USAGE'
+        // Which one to reach for, each with its own usage (ai:ask mechanisms --id=...):
+        // crud.screen          an admin lists and edits the records of one model
+        // crud.collection-feed a grid over one model, on a page of your own
+        // crud.action          an operation on a screen's rows beyond create, edit and delete
+        // crud.settings-page   editable configuration: names, thresholds, switches
+        //
+        // A dashboard or a wizard is not about one model's rows: use platform-ui components.
+        USAGE,
 )]
 final class Capabilities
 {
