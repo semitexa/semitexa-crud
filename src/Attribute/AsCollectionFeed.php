@@ -42,6 +42,9 @@ use Semitexa\Orm\Domain\Model\ResourceMetadata;
     ],
     seeAlso: 'ui.field-type',
     usage: <<<'USAGE'
+        // Signed-in visitors only by default; a grid anyone may see says so:
+        //   access: PayloadAccessType::Public, reason: 'the public price list'
+        // and one over admin rows names who may read them: #[RequiresPermission('orders.read')].
         #[AsCollectionFeed(path: '/orders/feed', name: 'orders.feed', model: OrderResource::class,
             defaultPerPage: 50, perPageOptions: [50, 100], defaultSort: '-total')]
         final class OrdersFeed extends CollectionFeed
@@ -76,6 +79,9 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
      * @param list<string>      $watch  the scopes a source-served feed refreshes on (a model-served one watches its model)
      * @param list<int>         $perPageOptions
      * @param string|null       $defaultSort the order a request without a sort gets, as `?sort=` writes it; the field must be sortable
+     * @param PayloadAccessType $access who may read the rows: Protected (the default) is signed-in
+     *        visitors only, as a page from make:page is; Public is anyone, and says why in $reason
+     * @param string|null       $reason why a public feed is public, in a sentence
      */
     public function __construct(
         string $path,
@@ -90,9 +96,19 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
         public readonly ?string $source = null,
         public readonly array $watch = [],
         public readonly ?string $defaultSort = null,
+        public readonly PayloadAccessType $access = PayloadAccessType::Protected,
+        ?string $reason = null,
     ) {
         if (($model === null) === ($source === null)) {
             throw new \InvalidArgumentException(sprintf('#[AsCollectionFeed] "%s" names its rows by a model or by a source: give exactly one.', $name));
+        }
+        // A feed is rows for a grid a person looks at: a machine endpoint is its own payload.
+        if ($access === PayloadAccessType::Service) {
+            throw new \InvalidArgumentException(sprintf('#[AsCollectionFeed] "%s" is read by a grid, so it is Protected or Public; a machine endpoint is an #[AsServicePayload] of its own.', $name));
+        }
+        // Rows anyone may read are a decision, so the attribute says whose (review, crud#11).
+        if ($access === PayloadAccessType::Public && trim((string) $reason) === '') {
+            throw new \InvalidArgumentException(sprintf("#[AsCollectionFeed] \"%s\" is Public: say why anyone may read its rows, reason: 'the public price list'.", $name));
         }
         parent::__construct(
             doc: $doc,
@@ -103,12 +119,17 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
             renderProfile: RenderProfile::Json,
             transport: TransportType::Sse,
             sseGateModel: SseGateModel::BearerSession,
+            reason: $reason,
         );
     }
 
+    /**
+     * Every feed was Public whatever its rows (tk-collection-feed-always-public):
+     * a feed over an admin model handed its rows to anyone who knew the path.
+     */
     public function getAccessType(): PayloadAccessType
     {
-        return PayloadAccessType::Public;
+        return $this->access;
     }
 
     public function model(): ?string
