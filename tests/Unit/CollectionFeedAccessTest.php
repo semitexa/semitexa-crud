@@ -54,4 +54,17 @@ final class CollectionFeedAccessTest extends TestCase
         $this->expectExceptionMessage('is read by a grid, so it is Protected or Public');
         new AsCollectionFeed(path: '/x/feed', name: 'x.feed', model: OrderRowFixture::class, access: PayloadAccessType::Service);
     }
+
+    #[Test]
+    public function a_public_feed_without_a_reason_is_refused(): void
+    {
+        foreach ([null, '', '  '] as $reason) {
+            try {
+                new AsCollectionFeed(path: '/x/feed', name: 'x.feed', model: OrderRowFixture::class, access: PayloadAccessType::Public, reason: $reason);
+                self::fail('a Public feed with reason ' . var_export($reason, true) . ' was accepted');
+            } catch (\InvalidArgumentException $e) {
+                self::assertStringContainsString('is Public: say why anyone may read its rows', $e->getMessage());
+            }
+        }
+    }
 }

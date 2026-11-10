@@ -106,6 +106,10 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
         if ($access === PayloadAccessType::Service) {
             throw new \InvalidArgumentException(sprintf('#[AsCollectionFeed] "%s" is read by a grid, so it is Protected or Public; a machine endpoint is an #[AsServicePayload] of its own.', $name));
         }
+        // Rows anyone may read are a decision, so the attribute says whose (review, crud#11).
+        if ($access === PayloadAccessType::Public && trim((string) $reason) === '') {
+            throw new \InvalidArgumentException(sprintf("#[AsCollectionFeed] \"%s\" is Public: say why anyone may read its rows, reason: 'the public price list'.", $name));
+        }
         parent::__construct(
             doc: $doc,
             path: $path,
