@@ -151,7 +151,7 @@ final class CollectionFeedHandler extends AbstractSseCollectionFeedHandler imple
             foreach ($related as $i => $value) {
                 $params['related' . $i] = $value;
             }
-            $result = $this->orm->getAdapter()->execute(
+            $result = $this->orm->getQueryAdapter()->execute(
                 sprintf(
                     'SELECT %s AS __id FROM %s WHERE %s IN (%s)',
                     SqlIdentifier::quote($relation->foreignKey),
@@ -209,7 +209,7 @@ final class CollectionFeedHandler extends AbstractSseCollectionFeedHandler imple
             if ($narrowed || $relation->pivotTable === null || $relation->relatedKey === null) {
                 continue;
             }
-            $result = $this->orm->getAdapter()->execute(sprintf(
+            $result = $this->orm->getQueryAdapter()->execute(sprintf(
                 'SELECT %1$s AS __related, COUNT(*) AS __c FROM %2$s GROUP BY %1$s',
                 SqlIdentifier::quote($relation->relatedKey),
                 SqlIdentifier::quote($relation->pivotTable),
