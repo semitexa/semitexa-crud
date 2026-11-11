@@ -131,7 +131,7 @@ final class RelationOptions
         foreach (array_values($ownerIds) as $i => $id) {
             $params['owner' . $i] = $id;
         }
-        $result = $this->orm->getAdapter()->execute(
+        $result = $this->orm->getQueryAdapter()->execute(
             sprintf(
                 'SELECT %1$s AS __owner, %2$s AS __related FROM %3$s WHERE %1$s IN (%4$s)',
                 SqlIdentifier::quote($relation->foreignKey),
