@@ -5,17 +5,11 @@ declare(strict_types=1);
 namespace Semitexa\Crud\Attribute;
 
 use Attribute;
-use Semitexa\Core\Attribute\AbstractPayloadRoute;
 use Semitexa\Core\Attribute\Capability;
 use Semitexa\Core\Attribute\SseGateModel;
-use Semitexa\Core\Attribute\TransportType;
 use Semitexa\Core\Auth\PayloadAccessType;
-use Semitexa\Core\Contract\DeclaresWatchScopesInterface;
 use Semitexa\Core\Resource\CollectionPaginationPolicy;
-use Semitexa\Core\Resource\RenderProfile;
-use Semitexa\Crud\Application\Resource\Response\CollectionFeedJsonResponse;
-use Semitexa\Crud\Domain\Contract\CollectionFeedRouteInterface;
-use Semitexa\Orm\Domain\Model\ResourceMetadata;
+use Semitexa\Crud\Domain\Model\FeedPaging;
 
 /**
  * A live collection feed declared by its fields: the route, its contract
@@ -71,11 +65,11 @@ use Semitexa\Orm\Domain\Model\ResourceMetadata;
         USAGE,
 )]
 #[Attribute(Attribute::TARGET_CLASS)]
-final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionFeedRouteInterface, DeclaresWatchScopesInterface
+final class AsCollectionFeed extends AbstractCollectionFeedRoute
 {
     /**
      * @param class-string|null $model  the ORM resource model the rows are
-     * @param class-string|null $source a CollectionSourceInterface service serving them instead (a repository, an API)
+     * @param class-string<\Semitexa\Crud\Domain\Contract\CollectionSourceInterface>|null $source a service serving them instead (a repository, an API)
      * @param list<string>      $watch  the scopes a source-served feed refreshes on (a model-served one watches its model)
      * @param list<int>         $perPageOptions
      * @param string|null       $defaultSort the order a request without a sort gets, as `?sort=` writes it; the field must be sortable
@@ -86,22 +80,19 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
     public function __construct(
         string $path,
         string $name,
-        public readonly ?string $model = null,
+        ?string $model = null,
         public readonly string $paginationMode = CollectionPaginationPolicy::MODE_PAGE,
         public readonly int $defaultPerPage = 25,
         public readonly array $perPageOptions = [10, 25, 50, 100],
         public readonly int $maxPerPage = 100,
         public readonly int $countThreshold = 1000,
         ?string $doc = null,
-        public readonly ?string $source = null,
-        public readonly array $watch = [],
-        public readonly ?string $defaultSort = null,
+        ?string $source = null,
+        array $watch = [],
+        ?string $defaultSort = null,
         public readonly PayloadAccessType $access = PayloadAccessType::Protected,
         ?string $reason = null,
     ) {
-        if (($model === null) === ($source === null)) {
-            throw new \InvalidArgumentException(sprintf('#[AsCollectionFeed] "%s" names its rows by a model or by a source: give exactly one.', $name));
-        }
         // A feed is rows for a grid a person looks at: a machine endpoint is its own payload.
         if ($access === PayloadAccessType::Service) {
             throw new \InvalidArgumentException(sprintf('#[AsCollectionFeed] "%s" is read by a grid, so it is Protected or Public; a machine endpoint is an #[AsServicePayload] of its own.', $name));
@@ -111,13 +102,20 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
             throw new \InvalidArgumentException(sprintf("#[AsCollectionFeed] \"%s\" is Public: say why anyone may read its rows, reason: 'the public price list'.", $name));
         }
         parent::__construct(
-            doc: $doc,
             path: $path,
-            methods: ['GET'],
             name: $name,
-            responseWith: CollectionFeedJsonResponse::class,
-            renderProfile: RenderProfile::Json,
-            transport: TransportType::Sse,
+            model: $model,
+            source: $source,
+            paging: new FeedPaging(
+                mode: $paginationMode,
+                defaultPerPage: $defaultPerPage,
+                perPageOptions: $perPageOptions,
+                maxPerPage: $maxPerPage,
+                countThreshold: $countThreshold,
+            ),
+            watch: $watch,
+            defaultSort: $defaultSort,
+            doc: $doc,
             sseGateModel: SseGateModel::BearerSession,
             reason: $reason,
         );
@@ -130,41 +128,5 @@ final class AsCollectionFeed extends AbstractPayloadRoute implements CollectionF
     public function getAccessType(): PayloadAccessType
     {
         return $this->access;
-    }
-
-    public function model(): ?string
-    {
-        return $this->model;
-    }
-
-    public function source(): ?string
-    {
-        return $this->source;
-    }
-
-    public function defaultSort(): ?string
-    {
-        return $this->defaultSort;
-    }
-
-    public function policy(): CollectionPaginationPolicy
-    {
-        return new CollectionPaginationPolicy(
-            mode: $this->paginationMode,
-            defaultPerPage: $this->defaultPerPage,
-            perPageOptions: $this->perPageOptions,
-            maxPerPage: $this->maxPerPage,
-            countThreshold: $this->countThreshold,
-        );
-    }
-
-    /**
-     * The model's resource key (its #[ResourceKey], else its table): the
-     * channel every ORM write to it publishes on, so the feed refreshes live
-     * with no publish code.
-     */
-    public function watchScopes(string $payloadClass): array
-    {
-        return $this->model === null ? $this->watch : [ResourceMetadata::for($this->model)->getResourceKey()];
     }
 }
